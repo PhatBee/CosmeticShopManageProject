@@ -1,0 +1,214 @@
+name: Notify Slack and Update Jira
+
+on:
+  push:
+    branches: [ main, master, develop ]
+
+jobs:
+  notify-and-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Get commit info
+        id: commit
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=format:%s)
+          COMMIT_AUTHOR=$(git log -1 --pretty=format:%an)
+          COMMIT_SHA=$(git log -1 --pretty=format:%h)
+          echo "message=$COMMIT_MSG" >> $GITHUB_OUTPUT
+          echo "author=$COMMIT_AUTHOR" >> $GITHUB_OUTPUT
+          echo "sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
+
+      - name: Send notification to Slack
+        uses: slackapi/slack-github-action@v1.23.0
+        with:
+          payload: |
+            {
+              "text": "Mới có push lên repository *${{ github.repository }}*",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Commit mới trên ${{ github.repository }}*\n*Branch:* ${{ github.ref_name }}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Commit message:* ${{ steps.commit.outputs.message }}\n*Author:* ${{ steps.commit.outputs.author }}\n*Commit SHA:* ${{ steps.commit.outputs.sha }}"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "Xem trên GitHub"
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/commit/${{ steps.commit.outputs.sha }}"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: Set up Python
+        if: contains(steps.commit.outputs.message, 'TOD-') || contains(steps.commit.outputs.message, 'fix') || contains(steps.commit.outputs.message, 'close') || contains(steps.commit.outputs.message, 'resolve')
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        if: contains(steps.commit.outputs.message, 'TOD-') || contains(steps.commit.outputs.message, 'fix') || contains(steps.commit.outputs.message, 'close') || contains(steps.commit.outputs.message, 'resolve')
+        run: pip install requests
+
+      - name: Create Jira update script
+        if: contains(steps.commit.outputs.message, 'TOD-') || contains(steps.commit.outputs.message, 'fix') || contains(steps.commit.outputs.message, 'close') || contains(steps.commit.outputs.message, 'resolve')
+        run: |
+          cat > update_jira.py << 'EOL'
+          #!/usr/bin/env python3
+          import os
+          import sys
+          import re
+          import json
+          import requests
+          from requests.auth import HTTPBasicAuth
+
+          # Đọc commit message từ tham số
+          commit_message = sys.argv[1]
+
+          # Cấu hình từ biến môi trường
+          jira_base_url = os.environ.get('JIRA_BASE_URL')
+          jira_email = os.environ.get('JIRA_EMAIL')
+          jira_api_token = os.environ.get('JIRA_API_TOKEN')
+          slack_webhook_url = os.environ.get('SLACK_WEBHOOK_URL')
+
+          # Kiểm tra biến môi trường
+          if not all([jira_base_url, jira_email, jira_api_token]):
+              print("Lỗi: Thiếu biến môi trường Jira cần thiết")
+              sys.exit(1)
+
+          # Xác định mẫu Jira issue (điều chỉnh regex theo quy tắc đặt tên project của bạn)
+          issue_pattern = r'[A-Z]+-\d+'
+          issues = re.findall(issue_pattern, commit_message)
+
+          # Xác định trạng thái dựa vào từ khóa - Cập nhật theo danh sách Transition ID của bạn
+          transition_id = None
+          transition_name = None
+          
+          if re.search(r'\bfix\b', commit_message.lower()):
+              transition_name = "In Progress"
+              transition_id = "21"  # In Progress ID
+          elif re.search(r'\bclose\b', commit_message.lower()):
+              transition_name = "Done"
+              transition_id = "31"  # Done ID
+          elif re.search(r'\bresolve\b', commit_message.lower()):
+              transition_name = "Done"
+              transition_id = "31"  # Done ID (vì không có Resolved)
+          else:
+              transition_name = "In Progress"
+              transition_id = "21"  # Mặc định là In Progress
+
+          # Báo cáo cấu hình
+          print(f"Jira Base URL: {jira_base_url}")
+          print(f"Jira Email: {jira_email}")
+          print(f"Tìm thấy issues: {issues}")
+          print(f"Transition: {transition_name} (ID: {transition_id})")
+
+          # Cập nhật các issue Jira
+          results = []
+          for issue in issues:
+              if transition_id:
+                  try:
+                      # Gọi API Jira để chuyển trạng thái
+                      url = f"{jira_base_url}/rest/api/3/issue/{issue}/transitions"
+                      auth = HTTPBasicAuth(jira_email, jira_api_token)
+                      headers = {
+                          "Accept": "application/json",
+                          "Content-Type": "application/json"
+                      }
+                      payload = {
+                          "transition": {
+                              "id": transition_id
+                          }
+                      }
+                      
+                      print(f"Gửi request đến: {url}")
+                      print(f"Payload: {json.dumps(payload)}")
+                      
+                      response = requests.post(
+                          url,
+                          data=json.dumps(payload),
+                          headers=headers,
+                          auth=auth
+                      )
+                      
+                      print(f"Response status: {response.status_code}")
+                      
+                      if response.status_code == 204:
+                          results.append(f"Đã chuyển {issue} sang {transition_name}")
+                      else:
+                          results.append(f"Không thể chuyển {issue}: {response.status_code} - {response.text}")
+                          
+                  except Exception as e:
+                      results.append(f"Lỗi khi xử lý {issue}: {str(e)}")
+              else:
+                  results.append(f"Không xác định được trạng thái cho {issue}")
+
+          # Gửi kết quả tới Slack nếu có issues được cập nhật
+          if results and slack_webhook_url:
+              slack_message = {
+                  "text": "Cập nhật issue Jira từ commit",
+                  "blocks": [
+                      {
+                          "type": "section",
+                          "text": {
+                              "type": "mrkdwn",
+                              "text": f"*Cập nhật issue Jira từ commit:*\n{commit_message}"
+                          }
+                      },
+                      {
+                          "type": "section",
+                          "text": {
+                              "type": "mrkdwn",
+                              "text": "\n".join(results)
+                          }
+                      }
+                  ]
+              }
+              
+              try:
+                  slack_response = requests.post(
+                      slack_webhook_url,
+                      data=json.dumps(slack_message),
+                      headers={"Content-Type": "application/json"}
+                  )
+                  print(f"Slack response: {slack_response.status_code}")
+              except Exception as e:
+                  print(f"Lỗi khi gửi thông báo đến Slack: {str(e)}")
+
+          # In kết quả để lưu vào log
+          print("\n".join(results))
+          EOL
+          
+          chmod +x update_jira.py
+
+      - name: Run Jira update script
+        if: contains(steps.commit.outputs.message, 'TOD-') || contains(steps.commit.outputs.message, 'fix') || contains(steps.commit.outputs.message, 'close') || contains(steps.commit.outputs.message, 'resolve')
+        run: python update_jira.py "${{ steps.commit.outputs.message }}"
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
