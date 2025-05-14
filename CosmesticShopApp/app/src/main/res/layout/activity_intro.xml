@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/xanh3"
+    android:backgroundTint="@color/xanh3"
+    tools:context=".activity.IntroActivity">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" >
+
+            <TextView
+                android:id="@+id/textView4"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="100dp"
+                android:layout_marginTop="20dp"
+                android:textAlignment="center"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:text="FRESH" />
+
+            <TextView
+                android:id="@+id/textView3"
+                android:layout_marginTop="15dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/introText"
+                android:textStyle="bold"
+                android:textAlignment="center"
+                android:textColor="@color/white"
+                android:textSize="20dp" />
+
+            <ImageView
+                android:id="@+id/imageView6"
+                android:layout_marginTop="25dp"
+                android:layout_width="match_parent"
+                android:layout_height="532dp"
+                app:srcCompat="@drawable/bg" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnIntro"
+                style="@android:style/Widget.Button"
+                android:background="@drawable/bg_blue3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Bắt đầu"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:textSize="26dp"
+                />
+<!--                android:layout_marginTop="10dp"-->
+        </LinearLayout>
+    </ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>

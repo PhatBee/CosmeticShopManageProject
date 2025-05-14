@@ -9,7 +9,7 @@ android {
     defaultConfig {
         applicationId = "vn.phatbee.cosmesticshopapp"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
@@ -25,6 +25,10 @@ android {
             )
         }
     }
+    buildFeatures{
+        viewBinding = true
+        dataBinding = true
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -37,7 +41,23 @@ dependencies {
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
+    implementation(libs.annotation)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+
+    implementation(libs.lifecycle.extensions)
+    implementation(libs.lifecycle.runtime.ktx)
+    implementation(libs.lifecycle.viewmodel.ktx)
+    implementation(libs.lifecycle.livedata.ktx)
+    implementation(libs.activity.ktx)
+    implementation (libs.glide)
+    implementation (libs.gson)
+    implementation(libs.dotsindicator)
+    implementation (libs.retrofit)
+    implementation (libs.converter.gson)
+    implementation (libs.okhttp)
+    implementation(libs.logging.interceptor)
+    // VNPAY SDK .aar
+    implementation(files("libs/merchant-1.0.25.aar"))
 }
