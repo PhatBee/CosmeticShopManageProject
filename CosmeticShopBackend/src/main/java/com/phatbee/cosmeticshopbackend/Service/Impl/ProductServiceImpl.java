@@ -1,4 +1,4 @@
-package com.phatbee.cosmeticshopbackend.Service.impl;
+package com.phatbee.cosmeticshopbackend.Service.Impl;
 
 import com.phatbee.cosmeticshopbackend.Entity.Product;
 import com.phatbee.cosmeticshopbackend.Repository.ProductRepository;
