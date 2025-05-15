@@ -13,20 +13,21 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 
 import java.util.List;
+import java.util.Locale;
 
 import vn.phatbee.cosmesticshopapp.R;
 import vn.phatbee.cosmesticshopapp.model.Product;
 
 public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductViewHolder>{
     private List<Product> productList;
-    private Context context;
-    private OnProductClickListener listener;
+    private final Context context;
+    private final OnProductClickListener listener;
 
     @NonNull
     @Override
     public ProductViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.product_item, parent, false);
-        return new ProductViewHolder(view);
+        //View view = LayoutInflater.from(context).inflate(R.layout.product_item, parent, false);
+        return new ProductViewHolder(new View(context));    // fix
     }
 
     @Override
@@ -85,7 +86,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
             super(itemView);
             ivProductImage = itemView.findViewById(R.id.ivProductImage);
             tvProductName = itemView.findViewById(R.id.tvProductName);
-            tvProductPrice = itemView.findViewById(R.id.tvProductPrice);
+            //tvProductPrice = itemView.findViewById(R.id.tvProductPrice);
         }
     }
 }
