@@ -7,4 +7,5 @@ public class UserUpdateDTO {
     private String fullName;
     private String phone;
     private String gender;
+    private String image;
 }
