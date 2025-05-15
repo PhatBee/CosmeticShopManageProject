@@ -105,8 +105,8 @@ public class MainActivity extends AppCompatActivity implements CategoryAdapter.O
         });
 
         ivProfile.setOnClickListener( v -> {
-            Intent intent = new Intent(MainActivity.this, ProfileActivity.class);
-            startActivity(intent);
+//            Intent intent = new Intent(MainActivity.this, ProfileActivity.class);
+//            startActivity(intent);
         });
 
         ivSearch.setOnClickListener(v -> {
@@ -115,13 +115,13 @@ public class MainActivity extends AppCompatActivity implements CategoryAdapter.O
         });
 
         ivWishList.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, WishlistActivity.class);
-            startActivity(intent);
+//            Intent intent = new Intent(MainActivity.this, WishlistActivity.class);
+//            startActivity(intent);
         });
 
         ivDonHang.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, OrderListActivity.class);
-            startActivity(intent);
+//            Intent intent = new Intent(MainActivity.this, OrderListActivity.class);
+//            startActivity(intent);
         });
 
     }

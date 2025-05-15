@@ -17,6 +17,9 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
+            android:name=".activity.CartActivity"
+            android:exported="false" />
+        <activity
             android:name=".activity.ReviewActivity"
             android:exported="false" />
         <activity
@@ -57,9 +60,6 @@
             android:exported="false" />
         <activity
             android:name=".activity.CheckoutActivity"
-            android:exported="false" />
-        <activity
-            android:name=".activity.CartActivity"
             android:exported="false" />
         <activity
             android:name=".activity.EditAccountActivity"

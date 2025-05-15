@@ -83,8 +83,8 @@ public class ProductDetailsActivity extends AppCompatActivity {
 
         btnWish = findViewById(R.id.ivWishlist);
         btnWish.setOnClickListener(v -> {
-            Intent intent = new Intent(ProductDetailsActivity.this, WishlistActivity.class);
-            startActivity(intent);
+//            Intent intent = new Intent(ProductDetailsActivity.this, WishlistActivity.class);
+//            startActivity(intent);
         });
 
         btnWish.setOnClickListener(view -> toggleWishlist());
@@ -179,11 +179,11 @@ public class ProductDetailsActivity extends AppCompatActivity {
                     if (navigateToCheckout) {
                         CartItem cartItem = createCartItem(quantity);
                         if (cartItem != null) {
-                            Intent intent = new Intent(ProductDetailsActivity.this, CheckoutActivity.class);
+//                            Intent intent = new Intent(ProductDetailsActivity.this, CheckoutActivity.class);
                             ArrayList<CartItem> cartItems = new ArrayList<>();
                             cartItems.add(cartItem);
-                            intent.putExtra("selectedCartItems", cartItems);
-                            startActivity(intent);
+//                            intent.putExtra("selectedCartItems", cartItems);
+//                            startActivity(intent);
                             Toast.makeText(ProductDetailsActivity.this, "Proceeding to checkout", Toast.LENGTH_SHORT).show();
                         }
                     }
