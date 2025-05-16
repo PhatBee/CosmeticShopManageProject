@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @Service
 public class ProductFeedbackServiceImpl implements ProductFeedbackService {
     @Autowired
-    private ProductFeedbackRepository feedbackRepository;
+    private ProductFeedbackRepository feedbackRepository; //
 
     @Autowired
     private ProductRepository productRepository;
