@@ -13,28 +13,27 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 
 import java.util.List;
-import java.util.Locale;
 
 import vn.phatbee.cosmesticshopapp.R;
 import vn.phatbee.cosmesticshopapp.model.Product;
 
 public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductViewHolder>{
     private List<Product> productList;
-    private final Context context;
-    private final OnProductClickListener listener;
+    private Context context;
+    private OnProductClickListener listener;
 
     @NonNull
     @Override
     public ProductViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        //View view = LayoutInflater.from(context).inflate(R.layout.product_item, parent, false);
-        return new ProductViewHolder(new View(context));    // fix
+        View view = LayoutInflater.from(context).inflate(R.layout.product_item, parent, false);
+        return new ProductViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ProductViewHolder holder, int position) {
         Product product = productList.get(position);
         holder.tvProductName.setText(product.getProductName());
-        holder.tvProductPrice.setText(String.format("$%.2f", product.getPrice()));
+        holder.tvProductPrice.setText(String.format(String.format("%,.0f VND", product.getPrice())));
 
         // Load image using Glide or Picasso
         if (product.getImage() != null && !product.getImage().isEmpty()) {
@@ -86,7 +85,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
             super(itemView);
             ivProductImage = itemView.findViewById(R.id.ivProductImage);
             tvProductName = itemView.findViewById(R.id.tvProductName);
-            //tvProductPrice = itemView.findViewById(R.id.tvProductPrice);
+            tvProductPrice = itemView.findViewById(R.id.tvProductPrice);
         }
     }
 }
