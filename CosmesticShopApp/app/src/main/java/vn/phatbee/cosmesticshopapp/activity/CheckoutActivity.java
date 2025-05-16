@@ -373,7 +373,7 @@ public class CheckoutActivity extends AppCompatActivity {
         });
     }
 
-    private void openVNPaySDK(String paymentUrl) {
+    private void openVNPaySDK(String paymentUrl) { ///
         Intent intent = new Intent(this, VNP_AuthenticationActivity.class);
         intent.putExtra("url", paymentUrl); // URL thanh toán từ backend
         intent.putExtra("tmn_code", tmnCode); // Mã TMN từ VNPay
