@@ -30,7 +30,7 @@ import vn.phatbee.cosmesticshopapp.retrofit.RetrofitClient;
 public class LoginActivity extends AppCompatActivity {
     private TextInputEditText editTextUsername, editTextPassword;
     private Button btnLogin;
-    private TextView textViewRegister, textViewForgotPassword, tvSeeAll; //
+    private TextView textViewRegister, textViewForgotPassword, tvSeeAll;
     private UserSessionManager sessionManager;
     private ProgressDialog progressDialog;
 
