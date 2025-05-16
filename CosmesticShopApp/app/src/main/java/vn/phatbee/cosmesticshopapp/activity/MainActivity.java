@@ -16,6 +16,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
@@ -34,27 +35,33 @@ import vn.phatbee.cosmesticshopapp.R;
 import vn.phatbee.cosmesticshopapp.adapter.BannerAdapter;
 import vn.phatbee.cosmesticshopapp.adapter.CategoryAdapter;
 import vn.phatbee.cosmesticshopapp.adapter.ProductRecentAdapter;
+import vn.phatbee.cosmesticshopapp.adapter.ProductTopSellingAdapter;
+import vn.phatbee.cosmesticshopapp.manager.UserSessionManager;
 import vn.phatbee.cosmesticshopapp.model.Banner;
 import vn.phatbee.cosmesticshopapp.model.Category;
 import vn.phatbee.cosmesticshopapp.model.Product;
+import vn.phatbee.cosmesticshopapp.model.ProductSalesDTO;
 import vn.phatbee.cosmesticshopapp.retrofit.ApiService;
 import vn.phatbee.cosmesticshopapp.retrofit.RetrofitClient;
 
-public class MainActivity extends AppCompatActivity implements CategoryAdapter.OnCategoryClickListener, ProductRecentAdapter.OnProductRecentClickListener {
-    private TextView tvUsername;
+public class MainActivity extends AppCompatActivity implements CategoryAdapter.OnCategoryClickListener, ProductRecentAdapter.OnProductRecentClickListener, ProductTopSellingAdapter.OnTopSellingClickListener {
+    private TextView tvUsername, tvSeeAll;
     private SharedPreferences sharedPreferences;
     private ViewPager2 viewPagerSlider;
     private DotsIndicator dotsIndicator;
-    private ProgressBar progressBarBanner, progressBarCategory, progressBarRecent;
+    private ProgressBar progressBarBanner, progressBarCategory, progressBarRecent, progressBarTopSelling;
     private List<Banner> banners = new ArrayList<>();
     private BannerAdapter bannerAdapter;
     private ProductRecentAdapter productRecentAdapter;
+    private ProductTopSellingAdapter productTopSellingAdapter;
     private Handler autoScrollHandler;
     private Runnable autoScrollRunnable;
 
-    private RecyclerView rvCategories, rvRecent;
+    private UserSessionManager sessionManager;
+
+    private RecyclerView rvCategories, rvRecent, rvTopSelling;
     private CategoryAdapter categoryAdapter;
-    private ImageView ivGioHang, ivWishList, ivProfile, ivSearch, ivDonHang;
+    private ImageView ivGioHang, ivWishList, ivProfile, ivSearch, ivDonHang, ivHome;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,10 +78,16 @@ public class MainActivity extends AppCompatActivity implements CategoryAdapter.O
         ivSearch = findViewById(R.id.ivSearch);
         ivWishList = findViewById(R.id.ivYeuThich);
         ivDonHang = findViewById(R.id.ivDonHang);
+        ivHome = findViewById(R.id.ivHome);
         rvCategories = findViewById(R.id.rvDanhMuc);
         progressBarCategory = findViewById(R.id.progressBarCategory);
         rvRecent = findViewById(R.id.rvRecent);
         progressBarRecent = findViewById(R.id.progressBarRecent);
+        rvTopSelling = findViewById(R.id.rvTopSelling);
+        progressBarTopSelling = findViewById(R.id.progressBarTopSelling);
+        tvSeeAll = findViewById(R.id.tvSeeAll);
+
+        sessionManager = new UserSessionManager(this);
 
         // Verify RecyclerViews are initialized
         if (rvCategories == null) {
@@ -85,6 +98,10 @@ public class MainActivity extends AppCompatActivity implements CategoryAdapter.O
             Toast.makeText(this, "rvRecent not found", Toast.LENGTH_LONG).show();
             return;
         }
+        if (rvTopSelling == null) {
+            Toast.makeText(this, "rvTopSelling not found", Toast.LENGTH_LONG).show();
+            return;
+        }
 
         // Set up adapters
         bannerAdapter = new BannerAdapter(this, banners);
@@ -92,7 +109,8 @@ public class MainActivity extends AppCompatActivity implements CategoryAdapter.O
         dotsIndicator.setViewPager2(viewPagerSlider);
 
         categoryAdapter = new CategoryAdapter(this, this);
-        productRecentAdapter = new ProductRecentAdapter(this, this); // Initialize adapter
+        productRecentAdapter = new ProductRecentAdapter(this, this, sessionManager);
+        productTopSellingAdapter = new ProductTopSellingAdapter(this, this, sessionManager); // Sửa lỗi gõ nhầm
 
         // Setup RecyclerView
         setupRecyclerView();
@@ -101,40 +119,74 @@ public class MainActivity extends AppCompatActivity implements CategoryAdapter.O
         loadBanners();
         loadCategories();
         loadRecentProducts();
+        loadTopSellingProducts();
 
-        // Update username from SharedPreferences
-        sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
-        String username = sharedPreferences.getString("username", "");
-        tvUsername.setText(username);
+        // Update username display
+        updateUsernameDisplay();
 
-        // Set up click listeners
-        ivGioHang.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, CartActivity.class);
-            startActivity(intent);
-        });
-
-        ivProfile.setOnClickListener( v -> {
-//            Intent intent = new Intent(MainActivity.this, ProfileActivity.class);
-//            startActivity(intent);
-        });
-
-        ivSearch.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, SearchActivity.class);
-            startActivity(intent);
-        });
-
-        ivWishList.setOnClickListener(v -> {
-//            Intent intent = new Intent(MainActivity.this, WishlistActivity.class);
-//            startActivity(intent);
-        });
-
-        ivDonHang.setOnClickListener(v -> {
-//            Intent intent = new Intent(MainActivity.this, OrderListActivity.class);
-//            startActivity(intent);
-        });
+        // Set up click listeners for BottomNavigationView
+        setupClickListeners();
 
         // Auto-scroll feature
         setupAutoScroll();
+    }
+
+    private void setupClickListeners() {
+        ivHome.setOnClickListener(v -> {
+            // Already in MainActivity, no action needed
+        });
+
+        ivGioHang.setOnClickListener(v -> {
+            if (checkLogin()) {
+                startActivity(new Intent(MainActivity.this, CartActivity.class));
+            }
+        });
+
+        ivProfile.setOnClickListener(v -> {
+            if (checkLogin()) {
+                startActivity(new Intent(MainActivity.this, ProfileActivity.class));
+            }
+        });
+
+        ivSearch.setOnClickListener(v -> {
+            startActivity(new Intent(MainActivity.this, SearchActivity.class));
+        });
+
+        ivWishList.setOnClickListener(v -> {
+            if (checkLogin()) {
+                startActivity(new Intent(MainActivity.this, WishlistActivity.class));
+            }
+        });
+
+        ivDonHang.setOnClickListener(v -> {
+            if (checkLogin()) {
+                startActivity(new Intent(MainActivity.this, OrderListActivity.class));
+            }
+        });
+
+        tvSeeAll.setOnClickListener(v -> {
+            startActivity(new Intent(MainActivity.this, AllProductsActivity.class));
+        });
+    }
+
+
+    private void updateUsernameDisplay() {
+        if (sessionManager.isLoggedIn()) {
+            String username = sessionManager.getUserDetails().getUsername();
+            tvUsername.setText(username != null ? username : "Guest");
+        } else {
+            tvUsername.setText("Guest");
+        }
+    }
+
+    private boolean checkLogin() {
+        if (!sessionManager.isLoggedIn()) {
+            Toast.makeText(this, "Please log in to access this feature", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+            startActivity(intent);
+            return false;
+        }
+        return true;
     }
 
     private void setupRecyclerView() {
@@ -145,10 +197,14 @@ public class MainActivity extends AppCompatActivity implements CategoryAdapter.O
         rvCategories.setAdapter(categoryAdapter);
 
         // Recent Products RecyclerView
-        productRecentAdapter = new ProductRecentAdapter(this, this); // Ensure adapter is initialized
-        LinearLayoutManager recentLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
+        GridLayoutManager recentLayoutManager = new GridLayoutManager(this, 2); // Sử dụng GridLayoutManager với 2 cột
         rvRecent.setLayoutManager(recentLayoutManager);
         rvRecent.setAdapter(productRecentAdapter);
+
+        // Top Selling Products RecyclerView
+        GridLayoutManager topSellingLayoutManager = new GridLayoutManager(this, 2); // Sử dụng GridLayoutManager với 2 cột
+        rvTopSelling.setLayoutManager(topSellingLayoutManager);
+        rvTopSelling.setAdapter(productTopSellingAdapter);
     }
 
     private void loadCategories() {
@@ -190,7 +246,6 @@ public class MainActivity extends AppCompatActivity implements CategoryAdapter.O
             public void onResponse(Call<List<Product>> call, Response<List<Product>> response) {
                 progressBarRecent.setVisibility(View.GONE);
                 if (response.isSuccessful() && response.body() != null) {
-                    // Log the response
                     Log.d(TAG, "Recent Products Response: " + response.body());
                     for (Product product : response.body()) {
                         Log.d(TAG, "Product: ID=" + product.getProductId() +
@@ -210,6 +265,33 @@ public class MainActivity extends AppCompatActivity implements CategoryAdapter.O
             @Override
             public void onFailure(Call<List<Product>> call, Throwable t) {
                 progressBarRecent.setVisibility(View.GONE);
+                Log.e(TAG, "Network error: " + t.getMessage(), t);
+                Toast.makeText(MainActivity.this, "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void loadTopSellingProducts() {
+        progressBarTopSelling.setVisibility(View.VISIBLE);
+        ApiService apiService = RetrofitClient.getClient().create(ApiService.class);
+        apiService.getTopSellingProducts().enqueue(new Callback<List<ProductSalesDTO>>() {
+            @Override
+            public void onResponse(Call<List<ProductSalesDTO>> call, Response<List<ProductSalesDTO>> response) {
+                progressBarTopSelling.setVisibility(View.GONE);
+                if (response.isSuccessful() && response.body() != null) {
+                    Log.d(TAG, "Top Selling Products Response: " + response.body());
+                    productTopSellingAdapter.setProducts(response.body()); // Sửa thành productTopSellingAdapter
+                } else {
+                    Log.e(TAG, "Failed to load top selling products: " + response.message() +
+                            ", code: " + response.code() +
+                            ", errorBody: " + (response.errorBody() != null ? response.errorBody().toString() : "null"));
+                    Toast.makeText(MainActivity.this, "Failed to load top selling products", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<ProductSalesDTO>> call, Throwable t) {
+                progressBarTopSelling.setVisibility(View.GONE);
                 Log.e(TAG, "Network error: " + t.getMessage(), t);
                 Toast.makeText(MainActivity.this, "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
@@ -280,6 +362,13 @@ public class MainActivity extends AppCompatActivity implements CategoryAdapter.O
     }
 
     @Override
+    public void onTopSellingClick(Product product) {
+        Intent intent = new Intent(MainActivity.this, ProductDetailsActivity.class);
+        intent.putExtra("PRODUCT_ID", product.getProductId());
+        startActivity(intent);
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
         if (autoScrollHandler != null && autoScrollRunnable != null) {
@@ -293,6 +382,8 @@ public class MainActivity extends AppCompatActivity implements CategoryAdapter.O
         if (autoScrollHandler != null && autoScrollRunnable != null) {
             autoScrollHandler.postDelayed(autoScrollRunnable, 3000);
         }
+        loadRecentProducts();
+        loadTopSellingProducts();
     }
 
     @Override
@@ -342,5 +433,4 @@ public class MainActivity extends AppCompatActivity implements CategoryAdapter.O
             }
         }
     }
-
 }

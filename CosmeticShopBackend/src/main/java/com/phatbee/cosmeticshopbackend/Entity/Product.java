@@ -1,6 +1,5 @@
 package com.phatbee.cosmeticshopbackend.Entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -25,7 +24,7 @@ public class Product implements Serializable {
     private Long productId;
     @ManyToOne
     @JoinColumn(name = "category_id", referencedColumnName = "category_id")
-    @JsonBackReference(value = "category-product")
+//    @JsonBackReference(value = "category-product")
     private Category category;
     private String productName;
     private String productCode;
@@ -65,7 +64,8 @@ public class Product implements Serializable {
     private List<CartItem> cart_items;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
-    @JsonBackReference(value = "product-wishlist")
+//    @JsonManagedReference(value = "product-wishlist")
+    @JsonIgnore
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
     private List<Wishlist> wishlists;

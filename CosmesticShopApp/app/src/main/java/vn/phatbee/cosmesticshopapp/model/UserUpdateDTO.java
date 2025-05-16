@@ -4,6 +4,15 @@ public class UserUpdateDTO {
     private String fullName;
     private String phone;
     private String gender;
+    private String image;
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
 
     // Getters and Setters
     public String getFullName() { return fullName; }

@@ -24,6 +24,8 @@ public class Cart implements Serializable {
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL,orphanRemoval = true)
     @JsonManagedReference(value = "cart-cartitem")
     @ToString.Exclude
+//    @JsonIgnore
+
     @EqualsAndHashCode.Exclude
     private Set<CartItem> cartItems;
 

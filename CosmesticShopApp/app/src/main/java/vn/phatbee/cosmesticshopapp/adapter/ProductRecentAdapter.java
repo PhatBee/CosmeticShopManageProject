@@ -1,6 +1,7 @@
 package vn.phatbee.cosmesticshopapp.adapter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,20 +12,24 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.bumptech.glide.Glide;
+import com.google.android.material.snackbar.Snackbar;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import vn.phatbee.cosmesticshopapp.R;
+import vn.phatbee.cosmesticshopapp.activity.LoginActivity;
+import vn.phatbee.cosmesticshopapp.activity.WishlistActivity;
 import vn.phatbee.cosmesticshopapp.manager.UserSessionManager;
 import vn.phatbee.cosmesticshopapp.model.Product;
 import vn.phatbee.cosmesticshopapp.model.Wishlist;
 import vn.phatbee.cosmesticshopapp.retrofit.ApiService;
 import vn.phatbee.cosmesticshopapp.retrofit.RetrofitClient;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class ProductRecentAdapter extends RecyclerView.Adapter<ProductRecentAdapter.ProductViewHolder> {
     private static final String TAG = "ProductRecentAdapter";
@@ -37,16 +42,21 @@ public class ProductRecentAdapter extends RecyclerView.Adapter<ProductRecentAdap
         void onProductRecentClick(Product product);
     }
 
-    public ProductRecentAdapter(Context context, OnProductRecentClickListener listener) {
+    public ProductRecentAdapter(Context context, OnProductRecentClickListener listener, UserSessionManager sessionManager) {
         this.context = context;
         this.products = new ArrayList<>();
         this.listener = listener;
+        this.sessionManager = sessionManager;
     }
 
     public void setProducts(List<Product> products) {
         this.products.clear();
         this.products.addAll(products);
         notifyDataSetChanged();
+    }
+
+    public void refreshWishlistStatus() {
+        notifyDataSetChanged(); // Làm mới toàn bộ danh sách để cập nhật trạng thái wishlist
     }
 
     @NonNull
@@ -86,33 +96,60 @@ public class ProductRecentAdapter extends RecyclerView.Adapter<ProductRecentAdap
                     listener.onProductRecentClick(products.get(getAdapterPosition()));
                 }
             });
+
+            ivWishlist.setOnClickListener(v -> {
+                Product product = products.get(getAdapterPosition());
+                if (!checkLogin(product)) return;
+                // Thêm animation
+                ivWishlist.animate().scaleX(1.2f).scaleY(1.2f).setDuration(100)
+                        .withEndAction(() -> ivWishlist.animate().scaleX(1f).scaleY(1f).setDuration(100).start())
+                        .start();
+                toggleWishlist(product);
+            });
         }
 
         void bind(Product product) {
-            // Handle product name
             tvProductName.setText(product.getProductName() != null ? product.getProductName() : "Unknown Product");
-
-            // Handle product price
             Double price = product.getPrice();
             if (price != null) {
-                tvProductPrice.setText(String.format("%.2f VNĐ", price));
+                tvProductPrice.setText(String.format("%,.0f VND", price));
             } else {
                 tvProductPrice.setText("Price Unavailable");
             }
-
-            // Handle product image
             Glide.with(context)
                     .load(product.getImage())
                     .placeholder(R.drawable.ic_launcher_background)
                     .error(R.drawable.ic_launcher_background)
                     .into(ivProductImage);
+
+            if (sessionManager.isLoggedIn()) {
+                ivWishlist.setEnabled(true);
+                ivWishlist.setAlpha(1.0f);
+                checkWishlistStatus(product);
+            } else {
+                ivWishlist.setImageResource(R.drawable.ic_heart);
+                ivWishlist.setEnabled(false);
+                ivWishlist.setAlpha(0.5f);
+                isInWishlist = false;
+            }
+        }
+
+        private boolean checkLogin(Product product) {
+            if (!sessionManager.isLoggedIn()) {
+                Toast.makeText(context, "Please log in to manage wishlist", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(context, LoginActivity.class);
+                intent.putExtra("PRODUCT_ID", product.getProductId());
+                context.startActivity(intent);
+                return false;
+            }
+            return true;
         }
 
         private void checkWishlistStatus(Product product) {
             Long userId = sessionManager.getUserDetails().getUserId();
             if (userId == null || userId == 0) {
-                ivWishlist.setImageResource(R.drawable.ic_heart);
                 isInWishlist = false;
+                ivWishlist.setImageResource(R.drawable.ic_heart);
                 return;
             }
 
@@ -124,11 +161,17 @@ public class ProductRecentAdapter extends RecyclerView.Adapter<ProductRecentAdap
                     if (response.isSuccessful() && response.body() != null) {
                         isInWishlist = response.body();
                         ivWishlist.setImageResource(isInWishlist ? R.drawable.ic_heart_filled : R.drawable.ic_heart);
+                    } else {
+                        isInWishlist = false;
+                        ivWishlist.setImageResource(R.drawable.ic_heart);
+                        Log.e(TAG, "Failed to check wishlist status: HTTP " + response.code());
                     }
                 }
 
                 @Override
                 public void onFailure(Call<Boolean> call, Throwable t) {
+                    isInWishlist = false;
+                    ivWishlist.setImageResource(R.drawable.ic_heart);
                     Log.e(TAG, "Error checking wishlist status: " + t.getMessage());
                 }
             });
@@ -137,7 +180,7 @@ public class ProductRecentAdapter extends RecyclerView.Adapter<ProductRecentAdap
         private void toggleWishlist(Product product) {
             Long userId = sessionManager.getUserDetails().getUserId();
             if (userId == null || userId == 0) {
-                Toast.makeText(context, "Please log in to manage wishlist", Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "Invalid userId in toggleWishlist");
                 return;
             }
 
@@ -150,7 +193,12 @@ public class ProductRecentAdapter extends RecyclerView.Adapter<ProductRecentAdap
                         if (response.isSuccessful()) {
                             isInWishlist = false;
                             ivWishlist.setImageResource(R.drawable.ic_heart);
-                            Toast.makeText(context, "Removed from wishlist", Toast.LENGTH_SHORT).show();
+                            Snackbar.make(itemView, "Removed from wishlist", Snackbar.LENGTH_LONG)
+                                    .setAction("Go to Wishlist", v -> {
+                                        Intent intent = new Intent(context, WishlistActivity.class);
+                                        context.startActivity(intent);
+                                    })
+                                    .show();
                         } else {
                             Toast.makeText(context, "Failed to remove from wishlist", Toast.LENGTH_SHORT).show();
                         }
@@ -170,7 +218,12 @@ public class ProductRecentAdapter extends RecyclerView.Adapter<ProductRecentAdap
                         if (response.isSuccessful() && response.body() != null) {
                             isInWishlist = true;
                             ivWishlist.setImageResource(R.drawable.ic_heart_filled);
-                            Toast.makeText(context, "Added to wishlist", Toast.LENGTH_SHORT).show();
+                            Snackbar.make(itemView, "Added to wishlist", Snackbar.LENGTH_LONG)
+                                    .setAction("Go to Wishlist", v -> {
+                                        Intent intent = new Intent(context, WishlistActivity.class);
+                                        context.startActivity(intent);
+                                    })
+                                    .show();
                         } else {
                             Toast.makeText(context, "Failed to add to wishlist", Toast.LENGTH_SHORT).show();
                         }

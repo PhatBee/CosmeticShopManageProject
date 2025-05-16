@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="vn.phatbee.cosmesticshopapp.fragment.HomeFragment"
+        android:label="Home" />
+    <fragment
+        android:id="@+id/searchFragment"
+        android:name="vn.phatbee.cosmesticshopapp.fragment.SearchFragment"
+        android:label="Search" />
+    <fragment
+        android:id="@+id/cartFragment"
+        android:name="vn.phatbee.cosmesticshopapp.fragment.CartFragment"
+        android:label="Cart" />
+    <fragment
+        android:id="@+id/wishlistFragment"
+        android:name="vn.phatbee.cosmesticshopapp.fragment.WishlistFragment"
+        android:label="Wishlist" />
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="vn.phatbee.cosmesticshopapp.fragment.ProfileFragment"
+        android:label="Profile" />
+    <fragment
+        android:id="@+id/orderFragment"
+        android:name="vn.phatbee.cosmesticshopapp.fragment.OrderFragment"
+        android:label="Order" />
+</navigation>

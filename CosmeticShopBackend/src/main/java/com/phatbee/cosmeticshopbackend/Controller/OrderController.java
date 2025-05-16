@@ -2,6 +2,7 @@ package com.phatbee.cosmeticshopbackend.Controller;
 
 import com.phatbee.cosmeticshopbackend.Entity.Order;
 import com.phatbee.cosmeticshopbackend.Service.OrderService;
+import com.phatbee.cosmeticshopbackend.Service.ProductFeedbackService;
 import com.phatbee.cosmeticshopbackend.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +31,8 @@ public class OrderController {
 
     @Autowired
     private OrderService orderService;
+    @Autowired
+    private ProductFeedbackService feedbackService;
 
     @PostMapping("/orders/create")
     public ResponseEntity<Void> createOrder(@RequestBody OrderRequestDTO orderRequestDTO) {
@@ -108,6 +111,24 @@ public class OrderController {
         // Tạo URL thanh toán
         String vnpayUrlWithParams = vnpayUrl + "?" + orderService.toQueryString(vnpParams);
         return ResponseEntity.ok(vnpayUrlWithParams);
+    }
+
+    @PostMapping("/feedback")
+    public ResponseEntity<ProductFeedbackDTO> createFeedback(@RequestBody ProductFeedbackDTO feedbackDTO) {
+        ProductFeedbackDTO createdFeedback = feedbackService.createFeedback(feedbackDTO);
+        return ResponseEntity.ok(createdFeedback);
+    }
+
+    @PutMapping("/feedback/{feedbackId}")
+    public ResponseEntity<ProductFeedbackDTO> updateFeedback(@PathVariable Long feedbackId, @RequestBody ProductFeedbackDTO feedbackDTO) {
+        ProductFeedbackDTO updatedFeedback = feedbackService.updateFeedback(feedbackId, feedbackDTO);
+        return ResponseEntity.ok(updatedFeedback);
+    }
+
+    @GetMapping("/feedback/order/{orderId}")
+    public ResponseEntity<List<ProductFeedbackDTO>> getFeedbackByOrderId(@PathVariable Long orderId) {
+        List<ProductFeedbackDTO> feedbackList = feedbackService.getFeedbackByOrderId(orderId);
+        return ResponseEntity.ok(feedbackList);
     }
 
     @GetMapping("/vnpay-redirect")
