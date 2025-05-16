@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="16dp"
+    android:orientation="vertical">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- Hình ảnh sản phẩm -->
+        <ImageView
+            android:id="@+id/ivProductImage"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:scaleType="centerCrop"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:srcCompat="@tools:sample/avatars" />
+
+        <!-- Tên sản phẩm và nút xóa -->
+        <TextView
+            android:id="@+id/tv_product_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="Newer Matte Lipstrick"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            app:layout_constraintStart_toEndOf="@id/ivProductImage"
+            app:layout_constraintTop_toTopOf="@id/ivProductImage" />
+
+        <!-- Thông tin chi tiết -->
+        <TextView
+            android:id="@+id/tv_product_details"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="VND 130.000"
+            android:textColor="@color/black"
+            android:textSize="12sp"
+            android:layout_marginTop="4dp"
+            app:layout_constraintStart_toStartOf="@id/tv_product_name"
+            app:layout_constraintTop_toBottomOf="@id/tv_product_name"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- Số lượng -->
+        <TextView
+            android:id="@+id/tv_quantity"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Quantity: 1"
+            android:textColor="#757575"
+            android:textSize="12sp"
+            android:layout_marginTop="4dp"
+            app:layout_constraintStart_toStartOf="@id/tv_product_name"
+            app:layout_constraintTop_toBottomOf="@id/tv_product_details"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Đường phân cách -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="16dp"
+        android:background="#EEEEEE" />
+
+</LinearLayout>

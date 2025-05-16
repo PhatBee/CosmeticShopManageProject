@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">PTC</string>
     <string name="introText">
-        <b><font color="#147E9E">Radiate</font></b>
+        <b><font color="#FFFFFFFF">Radiate</font></b>
         <b><font color="#FF000000">Confidence</font></b>\n
         <b><font color="#FF000000">Your Beauty,</font></b>\n
         <b><font color="#FF000000">Your Way</font></b>
@@ -24,4 +24,13 @@
     <string name="invalid_username">Not a valid username</string>
     <string name="invalid_password">Password must be >5 characters</string>
     <string name="login_failed">"Login failed"</string>
+    <string name="cloudinary_cloud_name">drsl2pmoi</string>
+    <string name="cloudinary_api_key">969923242229433</string>
+    <string name="cloudinary_api_secret">38GR-r6bu1vBBpKp1K1Uw7IodeE</string>
+
+    <string name="search_hint">Search products...</string>
+    <string name="no_internet_connection">No internet connection</string>
+    <string name="no_products_found">No products found</string>
+    <string name="error_fetching_products">Failed to fetch products</string>
+    <string name="error_message">Error: %1$s</string>
 </resources>

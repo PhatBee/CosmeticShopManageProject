@@ -51,8 +51,8 @@ public class CartServiceImpl implements CartService {
         return cart;
     }
 
-    @Transactional
     @Override
+    @Transactional
     public Cart addItemToCart(Long userId, Long productId, Long quantity) {
         Cart cart = this.getCartByUserId(userId);
         Product product = productRepository.findByProductId(productId)
@@ -80,8 +80,8 @@ public class CartServiceImpl implements CartService {
         return cartRepository.save(cart);
     }
 
-    @Transactional
     @Override
+    @Transactional
     public Cart updateCartItemQuantity(Long userId, Long productId, Long quantity) {
         Cart cart = this.getCartByUserId(userId);
 
@@ -101,8 +101,8 @@ public class CartServiceImpl implements CartService {
         return cartRepository.save(cart);
     }
 
-    @Transactional
     @Override
+    @Transactional
     public Cart removeItemFromCart(Long userId, Long cartItemId) {
         Cart cart = this.getCartByUserId(userId);
 
@@ -117,8 +117,8 @@ public class CartServiceImpl implements CartService {
         return cartRepository.save(cart);
     }
 
-    @Transactional
     @Override
+    @Transactional
     public void clearCart(Long userId) {
         Cart cart = this.getCartByUserId(userId);
         cartItemRepository.deleteAll(cart.getCartItems());
@@ -148,7 +148,7 @@ public class CartServiceImpl implements CartService {
 
             cart = new Cart();
             cart.setCustomer(user);
-            cart.setCartItems(new java.util.HashSet<>());
+            cart.setCartItems(new HashSet<>());
         }
 
         // Check if product is already in cart
@@ -174,8 +174,7 @@ public class CartServiceImpl implements CartService {
     }
 
 
-    @Override
-    public double calculateTotal(List<CartItemDTO> items) {
+    private double calculateTotal(List<CartItemDTO> items) {
         return items.stream()
                 .mapToDouble(item -> item.getProduct().getPrice() * item.getQuantity())
                 .sum();

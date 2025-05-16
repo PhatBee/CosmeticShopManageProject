@@ -2,17 +2,15 @@ package vn.phatbee.cosmesticshopapp.activity;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
-import android.net.NetworkInfo;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.ProgressBar;
-import android.widget.Toast;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
@@ -32,37 +30,41 @@ import vn.phatbee.cosmesticshopapp.retrofit.ApiService;
 import vn.phatbee.cosmesticshopapp.retrofit.RetrofitClient;
 
 public class SearchActivity extends AppCompatActivity implements ProductAdapter.OnProductClickListener {
+    private static final String PREFS_NAME = "SearchHistory";
+    private static final String KEY_LAST_SEARCH = "last_search";
+    private static final long DEBOUNCE_DELAY_MS = 300;
+
     private SearchView searchView;
     private RecyclerView recyclerViewSearchResults;
     private ProgressBar progressBar;
+    private TextView tvNotFound;
     private ProductAdapter productAdapter;
     private List<Product> productList = new ArrayList<>();
-    private Handler handler = new Handler();
+    private Handler handler = new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
 
-        // Initialize views
+        initializeViews();
+        setupRecyclerView();
+        setupSearchView();
+//        loadLastSearchQuery();
+        focusSearchView();
+    }
+
+    private void initializeViews() {
         searchView = findViewById(R.id.searchView);
         recyclerViewSearchResults = findViewById(R.id.recyclerViewSearchResults);
-        progressBar = findViewById(R.id.progressBar);
+        progressBar = findViewById(R.id.progressBarBanner);
+        tvNotFound = findViewById(R.id.tvNotFound);
+    }
 
-        // Setup RecyclerView
+    private void setupRecyclerView() {
         recyclerViewSearchResults.setLayoutManager(new GridLayoutManager(this, 2));
         productAdapter = new ProductAdapter(this, productList, this);
         recyclerViewSearchResults.setAdapter(productAdapter);
-
-        // Setup SearchView
-        setupSearchView();
-
-        // Load last search query
-        loadLastSearchQuery();
-
-        // Focus on SearchView and show keyboard
-        searchView.setIconified(false);
-        searchView.requestFocus();
     }
 
     private void setupSearchView() {
@@ -71,7 +73,7 @@ public class SearchActivity extends AppCompatActivity implements ProductAdapter.
 
             @Override
             public boolean onQueryTextSubmit(String query) {
-                searchProducts(query);
+                performSearch(query);
                 return true;
             }
 
@@ -80,30 +82,35 @@ public class SearchActivity extends AppCompatActivity implements ProductAdapter.
                 if (searchRunnable != null) {
                     handler.removeCallbacks(searchRunnable);
                 }
-                searchRunnable = () -> searchProducts(newText);
-                handler.postDelayed(searchRunnable, 300); // Debounce 300ms
+                searchRunnable = () -> performSearch(newText);
+                handler.postDelayed(searchRunnable, DEBOUNCE_DELAY_MS);
                 return true;
             }
         });
     }
 
-    private void searchProducts(String keyword) {
+    private void focusSearchView() {
+        searchView.setIconified(false);
+        searchView.requestFocus();
+    }
+
+    private void performSearch(String keyword) {
         if (!isNetworkAvailable()) {
-            Toast.makeText(this, "No internet connection", Toast.LENGTH_SHORT).show();
+            clearProductListAndShowNotFound();
             return;
         }
+
+//        saveSearchQuery(keyword);
         progressBar.setVisibility(View.VISIBLE);
+        tvNotFound.setVisibility(View.GONE);
 
         ApiService apiService = RetrofitClient.getClient().create(ApiService.class);
-        Call<List<Product>> call;
+        Call<List<Product>> call = keyword.trim().isEmpty() ? apiService.getProducts() : apiService.searchProducts(keyword);
 
-        if (keyword.trim().isEmpty()) {
-            saveSearchQuery(keyword);
-            call = apiService.getProducts(); // Load all products
-        } else {
-            call = apiService.searchProducts(keyword); // Search with keyword
-        }
+        fetchProducts(call, keyword);
+    }
 
+    private void fetchProducts(Call<List<Product>> call, String keyword) {
         call.enqueue(new Callback<List<Product>>() {
             @Override
             public void onResponse(Call<List<Product>> call, Response<List<Product>> response) {
@@ -112,21 +119,25 @@ public class SearchActivity extends AppCompatActivity implements ProductAdapter.
                     productList = response.body();
                     productAdapter.updateProductList(productList);
                     if (productList.isEmpty()) {
-                        Toast.makeText(SearchActivity.this,
-                                keyword.trim().isEmpty() ? "No products available" : "No products found for: " + keyword,
-                                Toast.LENGTH_SHORT).show();
+                        clearProductListAndShowNotFound();
                     }
                 } else {
-                    Toast.makeText(SearchActivity.this, "Failed to load products", Toast.LENGTH_SHORT).show();
+                    clearProductListAndShowNotFound();
                 }
             }
 
             @Override
             public void onFailure(Call<List<Product>> call, Throwable throwable) {
                 progressBar.setVisibility(View.GONE);
-                Toast.makeText(SearchActivity.this, "Error: " + throwable.getMessage(), Toast.LENGTH_SHORT).show();
+                clearProductListAndShowNotFound();
             }
         });
+    }
+
+    private void clearProductListAndShowNotFound() {
+        productList.clear();
+        productAdapter.updateProductList(productList);
+        tvNotFound.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -138,71 +149,38 @@ public class SearchActivity extends AppCompatActivity implements ProductAdapter.
 
     private boolean isNetworkAvailable() {
         ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (connectivityManager == null) {
-            return false;
-        }
+        if (connectivityManager == null) return false;
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            Network network = connectivityManager.getActiveNetwork();
-            if (network == null) {
-                return false;
-            }
-            NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(network);
-            return capabilities != null && (
-                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
-                            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
-                            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
-            );
-        } else {
-            NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-            return activeNetworkInfo != null && activeNetworkInfo.isConnected();
-        }
-    }
-    //Luu lich su tim kiem
-    private void saveSearchQuery(String query) {
-        SharedPreferences prefs = getSharedPreferences("SearchHistory", MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putString("last_search", query);
-        editor.apply();
+        Network network = connectivityManager.getActiveNetwork();
+        if (network == null) return false;
+
+        NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(network);
+        return capabilities != null && (
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+        );
     }
 
-    private void loadLastSearchQuery() {
-        SharedPreferences prefs = getSharedPreferences("SearchHistory", MODE_PRIVATE);
-        String lastSearch = prefs.getString("last_search", "");
-        if (!lastSearch.isEmpty()) {
-            searchView.setQuery(lastSearch, false);
-        }
-    }
-
-    private void loadAllProducts() {
-        if (!isNetworkAvailable()) {
-            Toast.makeText(this, "No internet connection", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        progressBar.setVisibility(View.VISIBLE);
-
-        ApiService apiService = RetrofitClient.getClient().create(ApiService.class);
-        Call<List<Product>> call = apiService.getProducts();
-        call.enqueue(new Callback<List<Product>>() {
-            @Override
-            public void onResponse(Call<List<Product>> call, Response<List<Product>> response) {
-                progressBar.setVisibility(View.GONE);
-                if (response.isSuccessful() && response.body() != null) {
-                    productList = response.body();
-                    productAdapter.updateProductList(productList);
-                    if (productList.isEmpty()) {
-                        Toast.makeText(SearchActivity.this, "No products available", Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    Toast.makeText(SearchActivity.this, "Failed to load products", Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onFailure(Call<List<Product>> call, Throwable throwable) {
-                progressBar.setVisibility(View.GONE);
-                Toast.makeText(SearchActivity.this, "Error: " + throwable.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
+//    private void saveSearchQuery(String query) {
+//        if (query.trim().isEmpty()) return;
+//        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+//        String history = prefs.getString("search_history", "");
+//        List<String> historyList = new ArrayList<>(Arrays.asList(history.isEmpty() ? new String[]{} : history.split(",")));
+//        if (!historyList.contains(query)) {
+//            historyList.add(0, query);
+//            if (historyList.size() > 5) historyList.remove(historyList.size() - 1); // Giới hạn 5 lịch sử
+//            prefs.edit().putString("search_history", String.join(",", historyList)).apply();
+//        }
+//        prefs.edit().putString(KEY_LAST_SEARCH, query).apply();
+//    }
+//
+//    private void loadLastSearchQuery() {
+//        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+//        String lastSearch = prefs.getString(KEY_LAST_SEARCH, "");
+//        if (!lastSearch.isEmpty()) {
+//            searchView.setQuery(lastSearch, false);
+//            performSearch(lastSearch);
+//        }
+//    }
 }

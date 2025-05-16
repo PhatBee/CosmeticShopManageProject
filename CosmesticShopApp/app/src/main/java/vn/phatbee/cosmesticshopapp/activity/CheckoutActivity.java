@@ -170,7 +170,7 @@ public class CheckoutActivity extends AppCompatActivity {
         loadContactInfo();
     }
 
-    private void fetchCartItems(List<CartItemLite> liteItems) { /// //
+    private void fetchCartItems(List<CartItemLite> liteItems) {
         Long userId = sessionManager.getUserDetails().getUserId();
         if (userId == null || userId == 0) {
             Toast.makeText(this, "Please log in to proceed", Toast.LENGTH_SHORT).show();

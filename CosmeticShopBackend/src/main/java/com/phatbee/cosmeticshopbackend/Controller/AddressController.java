@@ -4,13 +4,11 @@ import com.phatbee.cosmeticshopbackend.Entity.Address;
 import com.phatbee.cosmeticshopbackend.Repository.AddressRepository;
 import com.phatbee.cosmeticshopbackend.Repository.UserRepository;
 import com.phatbee.cosmeticshopbackend.Service.Impl.AddressServiceImpl;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/addresses")

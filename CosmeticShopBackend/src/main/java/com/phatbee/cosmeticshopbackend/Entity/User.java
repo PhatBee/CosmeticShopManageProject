@@ -1,6 +1,6 @@
 package com.phatbee.cosmeticshopbackend.Entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
@@ -48,7 +48,8 @@ public class User implements Serializable {
     private Cart cart;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    @JsonBackReference(value = "user-wishlist")
+//    @JsonManagedReference(value = "user-wishlist") // ✅ Managed ở phía danh sách
+    @JsonIgnore
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
     private List<Wishlist> wishlists;

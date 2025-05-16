@@ -4,6 +4,8 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
     <application
         android:allowBackup="true"
@@ -17,7 +19,13 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
-            android:name=".activity.CartActivity"
+            android:name=".activity.ReviewListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.AllProductsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.OrderProductDetailsActivity"
             android:exported="false" />
         <activity
             android:name=".activity.ReviewActivity"
@@ -41,9 +49,6 @@
             android:name=".activity.OrderListActivity"
             android:exported="false" />
         <activity
-            android:name=".activity.HomeFragment"
-            android:exported="false" />
-        <activity
             android:name=".activity.WishlistActivity"
             android:exported="false" />
         <activity
@@ -60,6 +65,9 @@
             android:exported="false" />
         <activity
             android:name=".activity.CheckoutActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activity.CartActivity"
             android:exported="false" />
         <activity
             android:name=".activity.EditAccountActivity"
