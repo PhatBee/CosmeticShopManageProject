@@ -26,6 +26,7 @@ import vn.phatbee.cosmesticshopapp.adapter.CartAdapter;
 import vn.phatbee.cosmesticshopapp.manager.UserSessionManager;
 import vn.phatbee.cosmesticshopapp.model.Cart;
 import vn.phatbee.cosmesticshopapp.model.CartItem;
+import vn.phatbee.cosmesticshopapp.model.CartItemLite;
 import vn.phatbee.cosmesticshopapp.model.CartItemRequest;
 import vn.phatbee.cosmesticshopapp.model.User;
 import vn.phatbee.cosmesticshopapp.retrofit.ApiService;
@@ -57,11 +58,12 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.CartI
         // Check if user is logged in
         if (currentUser == null || currentUser.getUserId() == null) {
             Log.e("CartActivity", "User is not logged in or userId is null");
-//            Intent intent = new Intent(this, LoginActivity.class);
-//            startActivity(intent);
-//            finish();
+            Intent intent = new Intent(this, LoginActivity.class);
+            startActivity(intent);
+            finish();
             return;
         }
+
         Log.d("CartActivity", "User ID: " + currentUser.getUserId());
 
         // Initialize UI components
@@ -77,6 +79,12 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.CartI
         setupListeners();
 
         // Load cart data
+        loadCartData();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
         loadCartData();
     }
 
@@ -104,26 +112,62 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.CartI
     }
 
     private void setupListeners() {
-        // Handle "Select All" checkbox
-        checkboxSelectAll.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            cartAdapter.selectAll(isChecked);
-            updateTotalPrice();
-        });
-
-        // Handle Confirm Cart button
-        btnConfirmCart.setOnClickListener(v -> {
-            List<CartItem> selectedItems = cartAdapter.getSelectedItems();
-            if (selectedItems.isEmpty()) {
-                Toast.makeText(CartActivity.this, "Please select at least one item", Toast.LENGTH_SHORT).show();
-                return;
-            }
+//        // Handle "Select All" checkbox
+//        checkboxSelectAll.setOnCheckedChangeListener((buttonView, isChecked) -> {
+//            cartAdapter.selectAll(isChecked);
+//            updateTotalPrice();
+//        });
+//
+//        // Handle Confirm Cart button
+//        btnConfirmCart.setOnClickListener(v -> {
+//            List<CartItem> selectedItems = cartAdapter.getSelectedItems();
+//            if (selectedItems.isEmpty()) {
+//                Toast.makeText(CartActivity.this, "Please select at least one item", Toast.LENGTH_SHORT).show();
+//                return;
+//            }
 //            Intent intent = new Intent(CartActivity.this, CheckoutActivity.class);
 //            intent.putExtra("selectedCartItems", new ArrayList<>(selectedItems)); // Ensure ArrayList
 //            startActivity(intent);
-        });
+//        });
+//
+//        // Handle Start Shopping button (when cart is empty)
+//        btnStartShopping.setOnClickListener(v -> finish());
 
-        // Handle Start Shopping button (when cart is empty)
-        btnStartShopping.setOnClickListener(v -> finish());
+            // Handle "Select All" checkbox
+            checkboxSelectAll.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                cartAdapter.selectAll(isChecked);
+                updateTotalPrice();
+            });
+
+            // Handle Confirm Cart button
+            btnConfirmCart.setOnClickListener(v -> {
+                List<CartItem> selectedItems = cartAdapter.getSelectedItems();
+                if (selectedItems.isEmpty()) {
+                    Toast.makeText(CartActivity.this, "Please select at least one item", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                // Convert selected CartItems to CartItemLite
+                List<CartItemLite> liteItems = new ArrayList<>();
+                for (CartItem item : selectedItems) {
+                    if (item.getProduct() != null) {
+                        liteItems.add(new CartItemLite(
+                                item.getCartItemId(),
+                                item.getProduct().getProductId(),
+                                item.getQuantity()
+                        ));
+                    }
+                }
+                if (liteItems.isEmpty()) {
+                    Toast.makeText(CartActivity.this, "No valid items selected", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                Intent intent = new Intent(CartActivity.this, CheckoutActivity.class);
+                intent.putExtra("selectedCartItems", new ArrayList<>(liteItems));
+                startActivity(intent);
+            });
+
+            // Handle Start Shopping button (when cart is empty)
+            btnStartShopping.setOnClickListener(v -> finish());
     }
 
     private void loadCartData() {
