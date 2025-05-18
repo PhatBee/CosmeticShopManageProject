@@ -30,7 +30,11 @@ public class WishlistServiceImpl implements WishlistService {
         Optional<User> userOptional = userRepository.findById(userId);
         Optional<Product> productOptional = productRepository.findById(productId);
 
-        if (userOptional.isEmpty() || productOptional.isEmpty()) {
+        if (userOptional.isEmpty()) {
+            throw new RuntimeException("User not found");
+        }
+
+        if (productOptional.isEmpty()) {
             throw new RuntimeException("Product not found");
         }
 
