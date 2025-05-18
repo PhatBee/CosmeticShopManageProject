@@ -65,4 +65,10 @@ dependencies {
     // VNPAY SDK .aar
     implementation(files("libs/merchant-1.0.25.aar"))
     implementation ("com.google.android.material:material:1.9.0")
+    // JUnit for unit testing
+    testImplementation (libs.junit)
+
+    // Mockito for mocking dependencies
+    testImplementation (libs.mockito.core)
+    testImplementation (libs.mockito.inline)
 }
