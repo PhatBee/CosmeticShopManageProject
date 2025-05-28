@@ -1,6 +1,6 @@
 # Cosmetic Shop
 
-**Cosmetic Shop** là ứng dụng Android cho nền tảng thương mại điện tử chuyên về mỹ phẩm, cho phép người dùng duyệt sản phẩm, thêm vào giỏ hàng, đặt hàng, thanh toán, và quản lý tài khoản. Ứng dụng được phát triển bằng Android Java, tích hợp với backend qua các API RESTful. Dự án này được thực hiện trong khuôn khổ môn **Lập trình di động** tại Trường Đại học Sư phạm Kỹ thuật TP.HCM (HCMUTE) bởi Nhóm 38.
+**Cosmetic Shop** là ứng dụng Android cho nền tảng thương mại điện tử chuyên về mỹ phẩm, cho phép người dùng duyệt sản phẩm, thêm vào giỏ hàng, đặt hàng, thanh toán, và quản lý tài khoản. Ứng dụng được phát triển bằng Android Java, tích hợp với backend qua các API RESTful. Dự án này được thực hiện trong khuôn khổ môn **Quản lý dự án phần mềm** tại Trường Đại học Sư phạm Kỹ thuật TP.HCM (HCMUTE) bởi Nhóm 38.
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/PhatBee/CosmeticShopFrontend)
 
